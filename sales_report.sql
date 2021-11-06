@@ -57,3 +57,32 @@ group
 by 1
 order
 by 1;
+
+# 연도별 인당 매출액 (고객 1명이 우리 서비스에 얼마를 지불하는지 그 변화를 파악)
+select substr(o.orderDate, 1, 4) year,
+count(distinct o.customerNumber) as N_purchaser,
+round(sum(priceEach * quantityOrdered)) as sales,
+round(sum(priceEach * quantityOrdered) / count(distinct o.customerNumber), 2) as amv
+from orders o
+left 
+join orderdetails d
+on o.orderNumber = d.orderNumber
+group 
+by 1
+order 
+by 1;
+
+# 연도별 건당 구매금액 (ATV, Average Transaction Value)
+# 1건의 거래는 평균 얼마의 매출을 발생시키는가!?
+select substr(o.orderDate, 1, 4) year,
+count(distinct o.ordernumber) as N_purchaser,
+round(sum(priceEach * quantityOrdered)) as sales,
+round(sum(priceEach * quantityOrdered) / count(distinct o.ordernumber), 2) as ATV
+from orders o
+left 
+join orderdetails d
+on o.orderNumber = d.orderNumber
+group 
+by 1
+order 
+by 1;
