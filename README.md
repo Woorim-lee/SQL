@@ -68,3 +68,6 @@
 
 * `select database();` : 현재 사용하고 있는 데이터베이스를 보여줌
 
+---
+
+📚 SQL 문법 실습파일 : https://www.mysqltutorial.org/mysql-sample-database.aspx
