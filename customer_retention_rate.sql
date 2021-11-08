@@ -28,15 +28,3 @@ join customers c
 on o.customerNumber = c.customerNumber
 group
 by 1,2;
-
-# 미국의 판매 top5 차량 모델 추출
-create table classicmodels.USA_CAR as
-select o.ordernumber, c.country, od.productcode, od.quantityOrdered
-from orders o
-left
-join customers c
-on o.customerNumber = c.customerNumber
-left
-join orderdetails od
-on o.orderNumber = od.orderNumber
-where c.country = 'USA';
