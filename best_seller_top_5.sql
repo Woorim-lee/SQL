@@ -28,7 +28,7 @@ by 1;
 select * from usa_car;
 
 # 미국의 판매 top5 차량 모델 추출
-
+# 첫번째 방법
 select productname,
 sales,
 dense_rank() over(order by sales desc) as rnk
@@ -36,3 +36,12 @@ from usa_car
 order
 by 2 desc
 limit 5;
+
+# 두번째 방법
+select *
+from (select *,
+rank() over(order by sales desc) rnk
+from usa_car) a
+where rnk <= 5
+order
+by rnk;
