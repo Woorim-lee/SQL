@@ -107,3 +107,20 @@ from temp
 left join orders using (orderNumber)
 where status <> 'Cancelled'
 order by 3 desc, 4 desc;
+
+
+-- 고객의 총 주문액을 검색하세요.
+-- 상품의 주문액은 주문단가(priceEach)와 주문개수(quantity)의 곱으로 계산합니다.
+-- 출력 컬럼은 customerId, name(고객명), 총주문액 순으로 합니다.
+-- 결과는 customerId의 오름차순으로 정렬합니다.
+-- 필요한 테이블 customers, orders, orderdetails
+select * from customers;
+
+select customerNumber, customerName, sum(priceEach*quantityOrdered) 총주문액
+from customers join orders using (customerNumber)
+			   join orderdetails using (orderNumber)
+group by customerNumber
+order by 1;
+
+
+select customerNumber, customerName, sum(priceEach*quantityOrdered) 총주문액
