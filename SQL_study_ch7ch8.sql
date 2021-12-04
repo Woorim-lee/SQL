@@ -122,5 +122,21 @@ from customers join orders using (customerNumber)
 group by customerNumber
 order by 1;
 
+-- 총주문액과 총결재액이 같은 고객을 검색하세요.
+-- 출력 컬럼은 customerId, name(고객명), 총주문액, 총결재액 순으로 합니다.
+-- 결과는 customerId의 오름차순으로 정렬합니다.
+-- 필요한 테이블 customers, orders, orderdetails, payments
+select * from payments;
 
+with temp as
+(
 select customerNumber, customerName, sum(priceEach*quantityOrdered) 총주문액
+from customers join orders using (customerNumber)
+			   join orderdetails using (orderNumber)
+group by customerNumber
+)
+select customerNumber, customerName, 총주문액, sum(amount) 총결재액
+from temp
+join payments using (customerNumber)
+group by customerNumber having 총주문액 = sum(amount)
+order by 1;
