@@ -140,3 +140,32 @@ from temp
 join payments using (customerNumber)
 group by customerNumber having 총주문액 = sum(amount)
 order by 1;
+
+
+-- 각 지점(s_offices.city) 별로, 소속 직원이 담당하는 고객수를 고객의 국가별로 검색하세요.
+-- 출력 컬럼은 city (s_offices.city), country (s_customers.country), 고객수 순으로 합니다.
+-- 결과는 city의 오름차순, country의 오름차순으로 정렬합니다.
+-- customers, employees, office 테이블 필요
+select * from offices;
+
+with temp as
+(
+select O.city, C.country, customerNumber
+from customers C
+join employees E
+on C.salesRepEmployeeNumber = E.employeeNumber
+join offices O
+using (officeCode)
+)
+select city, country, count(customerNumber)
+from temp
+group by country, city
+order by city, country
+
+
+-- 각 직원에 대해, 본인이 관리하는 고객의 2004년 주문액의 합계를 검색하세요.
+-- 고객의 2004년 주문액은 orderDate 기준입니다.
+-- 상품의 주문액은 주문단가(priceEach)와 주문개수(quantity)의 곱으로 계산합니다.
+-- 출력 컬럼은 직원의 근무지점(s_offices.city), 성명, 주문액합계 순으로 합니다.
+-- 성명은 firstName과 lastName으로 구성되며, 사이에 공백 문자(space)가 하나 들어갑니다.
+-- 결과는 주문액합계의 내림차순으로 정렬합니다.
