@@ -160,12 +160,147 @@ using (officeCode)
 select city, country, count(customerNumber)
 from temp
 group by country, city
-order by city, country
+order by city, country;
 
 
--- 각 직원에 대해, 본인이 관리하는 고객의 2004년 주문액의 합계를 검색하세요.
--- 고객의 2004년 주문액은 orderDate 기준입니다.
+-- 각 직원에 대해, 본인이 관리하는 고객의 2004년 주문액의 합계를 검색하세요
+-- 고객의 2004년 주문액은 orderDate 기준입니다
+-- 상품의 주문액은 주문단가(priceEach)와 주문개수(quantity)의 곱으로 계산합니다
+-- 출력 컬럼은 직원의 근무지점(s_offices.city), 성명, 주문액합계 순으로 합니다
+-- 성명은 firstName과 lastName으로 구성되며, 사이에 공백 문자(space)가 하나 들어갑니다
+-- 결과는 주문액합계의 내림차순으로 정렬합니다
+-- orderDetails, orders, customers, employees, offices 테이블 필요
+
+with temp as
+(
+select offices.city, salesRepEmployeeNumber, sum(quantityOrdered * priceEach) 주문액합계, lastName, firstName
+from customers C
+join orders O using (customerNumber)
+join orderDetails OD using (orderNumber)
+join employees E on C.salesRepEmployeeNumber = E.employeeNumber
+join offices using (officeCode)
+where year(orderDate) = 2004
+group by salesRepEmployeeNumber
+)
+select city 근무지, concat(firstName, ' ', lastName) 성명, 주문액합계
+from temp
+order by 3 desc;
+
+
+-- 각 직원에 대해, 본인이 관리하는 고객의 2004년 주문액 합계를 검색하세요.
+-- 단, 관리하는 고객사가 없는 직원도 결과에 포함합니다.
+-- 고객사의 2004년 주문액은 orderDate 기준입니다.
 -- 상품의 주문액은 주문단가(priceEach)와 주문개수(quantity)의 곱으로 계산합니다.
 -- 출력 컬럼은 직원의 근무지점(s_offices.city), 성명, 주문액합계 순으로 합니다.
 -- 성명은 firstName과 lastName으로 구성되며, 사이에 공백 문자(space)가 하나 들어갑니다.
 -- 결과는 주문액합계의 내림차순으로 정렬합니다.
+-- left join을 쓰면서 where 조건을 정할때는 조심해야함..!!
+
+with temp as
+(
+select *
+from orders join orderdetails using (orderNumber)
+where year(orderDate) = 2004
+)
+select O.city 근무지점, concat(firstName, ' ', lastName) 성명, sum(quantityOrdered * priceEach) 주문액합계
+from offices O right join employees E using (officeCode)
+			  left join customers C on E.employeeNumber = C.salesRepEmployeeNumber
+              left join temp using (customerNumber)
+group by employeeNumber
+order by 3 desc;
+
+
+-- orderDate 기준으로 2004년에, 주문회수가 많은 상위 50위까지의 상품을 검색하세요.
+-- 출력 컬럼은 productCode, name, 주문회수, 순위 순으로 합니다.
+-- 결과는 순위의 오름차순으로 정렬합니다.
+
+select * from orders;
+
+-- 내가 푼 것.. 순위 전체가 나옴!
+with temp as
+(
+select *
+from orders
+where year(orderDate) = 2004
+)
+select orderdetails.productCode, productName, count(productCode) 주문회수, rank() over(order by count(productCode) desc) 순위
+from temp left join orderdetails using (orderNumber)
+		  left join products using (productCode)
+group by productCode
+order by 4;
+
+-- 순위 50위까지만 출력
+-- 별칭으로는 where 절 조건으로 사용할 수 없기 때문에, with 문으로 temp 테이블을 생성하여 사용
+with temp as
+(
+select productCode, productName, count(productCode), rank() over(order by count(productCode) desc) 순위
+from products join orderdetails using (productCode)
+			  join orders using (orderNumber)
+where year(orderDate) = 2004
+group by productCode
+)
+select *
+from temp
+where 순위 <= 50
+order by 4;
+
+-- 고객의 담당직원(salesRepId) 성명과 결재액을 검색하세요.
+-- 단, 담당직원이 없는 고객도 결과에 포함합니다.
+-- 또, 결재액이 없는 고객도 결과에 포함하며, 이 경우 결재액은 0.00으로 출력합니다.
+-- 출력 컬럼은 고객명(name), 담당직원의 성명, 결재액 순으로 합니다.
+-- 담당직원 성명은 firstName과 lastName으로 구성하며, 사이에 공백 문자(space)가 하나 들어갑니다.
+-- 결과는 고객명의 오름차순으로 정렬합니다.
+
+select * from payments;
+
+-- 내 풀이
+with temp as
+(
+select customerName, sum(amount) 결재액, salesRepEmployeeNumber
+from payments right join customers using (customerNumber)
+group by customerName, salesRepEmployeeNumber
+)
+select customerName 고객명, concat(firstName, ' ', lastName) 담당직원성명, ifnull(결재액, 0.00)
+from temp
+left join employees on employees.employeeNumber = temp.salesRepEmployeeNumber
+order by 1;
+
+-- 추천 정답
+-- coalesce 를 사용하는 것을 추천!! 가능하면 표준함수를 사용하는 것이 좋다
+select customerName 고객명, concat(firstName, ' ', lastName) 담당직원성명, coalesce(sum(amount), 0.00) 결재액
+from employees right join customers on employeeNumber = salesRepEmployeeNumber
+			   left join payments using (customerNumber)
+group by customerNumber
+order by customerName;
+
+-- 고객의 담당직원 성명과 2004년도 결재액을 검색하세요.
+-- 단, 담당직원이 없는 고객도 결과에 포함합니다.
+-- 또, 결재액이 없는 고객도 결과에 포함하며, 이 경우 결재액은 0.00으로 출력합니다.
+-- 출력 컬럼은 고객명(name), 담당직원의 성명, 결재액 순으로 합니다.
+-- 담당직원의 성명은 firstName과 lastName으로 구성하며, 사이에 공백 문자(space)가 하나 들어갑니다.
+-- 결과는 고객명의 오름차순으로 정렬합니다.
+-- 조인 먼저 실행하고 WHERE 절에서 조건을 주면, 결재가 없는 고객은 모두 제거됨.
+
+select * from payments;
+
+with temp as
+(
+select *
+from payments
+where year(paymentDate) = 2004
+)
+select customerName 고객명, concat(firstName, ' ', lastName) 판매담당직원성명, coalesce(sum(amount), 0.00) 결재액
+from employees right join customers on employeeNumber = salesRepEmployeeNumber
+			   left join temp using (customerNumber)
+group by customerNumber
+order by customerName;
+
+
+-- self join
+-- 직원 자신이 직접 관리하는 부하 직원수를 검색하세요.
+-- 예를 들어, 사장이 직접 관리하는 부하 직원은 부사장만 해당됩니다.
+-- 부하 직원이 없는 말단 직원도 모두 출력에 포함하며, 이때 부하 직원수는 0으로 출력합니다.
+-- 출력 컬럼은 직원의 성명, jobTitle, 부하직원수 순으로 합니다.
+-- 성명은 firstName과 lastName으로 구성되며, 사이에 공백 문자(space)가 하나 들어갑니다.
+-- 결과는 성명의 오름차순으로 정렬합니다.
+
