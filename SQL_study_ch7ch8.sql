@@ -296,11 +296,22 @@ group by customerNumber
 order by customerName;
 
 
--- self join
+-- self join (동일한 테이블을 논리적으로만 두 테이블이라고 가정하여 조인하는 것, 개념이 정확해야함 주의필요!!)
+-- 직원과 직원의 상급자를 검색, 단, 상급자가 없는 직원도 포함.
+select em.employeeNumber, concat(em.firstName, ' ', em.lastName) employee, em.jobtitle, 
+	   mg.employeeNumber managerId, concat(mg.firstName, ' ', mg.lastName) manager
+from employees em 
+left join employees mg on em.reportsTo = mg.employeeNumber;
+
+
 -- 직원 자신이 직접 관리하는 부하 직원수를 검색하세요.
 -- 예를 들어, 사장이 직접 관리하는 부하 직원은 부사장만 해당됩니다.
 -- 부하 직원이 없는 말단 직원도 모두 출력에 포함하며, 이때 부하 직원수는 0으로 출력합니다.
 -- 출력 컬럼은 직원의 성명, jobTitle, 부하직원수 순으로 합니다.
 -- 성명은 firstName과 lastName으로 구성되며, 사이에 공백 문자(space)가 하나 들어갑니다.
 -- 결과는 성명의 오름차순으로 정렬합니다.
-
+select concat(mg.firstName, ' ', mg.lastName) 성명, mg.jobTitle, count(em.employeeNumber) 부하직원수
+from employees mg
+left join employees em on mg.employeeNumber = em.reportsTo
+group by mg.employeeNumber
+order by 1;
