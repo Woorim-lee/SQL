@@ -315,3 +315,20 @@ from employees mg
 left join employees em on mg.employeeNumber = em.reportsTo
 group by mg.employeeNumber
 order by 1;
+
+
+-- 자신의 매니저와 다른 지점(s_offices.city)에서 근무하는 직원을 검색하세요.
+-- 출력 컬럼은 직원의 성명, jobTitle, 근무 지점, 매니저 성명, jobTitle, 매니저 근무지점 순으로 합니다.
+-- 성명은 firstName과 lastName으로 구성하며, 사이에 공백 문자(space)가 하나 들어갑니다.
+-- 결과는 직원 성명의 오름차순으로 정렬합니다.
+
+with temp as
+(
+select employeeNumber, concat(firstName, ' ', lastName) 성명, jobtitle, reportsTo, city
+from employees left join offices using (officeCode)
+)
+select em.성명, em.jobtitle, em.city, mg.성명 매니저성명, mg.jobtitle, mg.city
+from temp mg
+left join temp em on mg.employeeNumber = em.reportsTo
+where mg.city <> em.city
+order by 1;
